@@ -5,8 +5,6 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
 #include <stdlib.h>
-#include <allegro5/allegro_audio.h>
-#include <allegro5/allegro_acodec.h>
 #include <time.h>
 
 	#define NUM_PRATOS 8 
@@ -98,7 +96,6 @@
 		j->vel = 1.5;
 	}
 
-
     int geraTempoPrato(int i) {
    	int predefinido[8] = {0};
     int tem = 0;
@@ -115,7 +112,7 @@
     int in1[3] = {2, 6, 0};
     for (k = 3; k <= 5; k += 2) {
         if (predefinido[k] == 0) {
-            in1[k - 3] = k;
+            in1[k-3] = k;
         }
     }
 
@@ -157,32 +154,26 @@
 		al_draw_filled_rectangle(pratos[i].x-(PRATO_W/2),pratos[i].y - PRATO_H, pratos[i].x+ (PRATO_W/2),pratos[i].y + PRATO_H, pratos[i].cor);
 	}
 
-	
-
-	void desenha_postes(poste poste[], Jogador j, ALLEGRO_EVENT ev){
+	void desenha_postes(poste poste[]){
 		int k;
 		for(k = 0; k <= NUM_PRATOS; k++){
 		al_draw_line(poste[k].x,POSTE_W,poste[k].x,POSTE_H,poste[k].cor,5);
 	}
 	}
+
 	void inicializa_postes(poste poste[]){
 		int j;
 		for (j = 0;j<NUM_PRATOS;j++){
 			poste[j].x = 110+(105*j);
 			poste[j].cor = al_map_rgb(255, 255, 255);
 		}
-
-		
 	}
-	
-
 
 int main(int argc, char **argv){
 
 	ALLEGRO_DISPLAY *display = NULL;
 	ALLEGRO_TIMER *timer = NULL;
 	ALLEGRO_EVENT_QUEUE *event_queue = NULL;
-	ALLEGRO_AUDIO_STREAM *musica = NULL;
 	int recorde;
 
 	FILE * arq;
@@ -194,7 +185,7 @@ int main(int argc, char **argv){
 		fprintf(stderr, "failed to initialize allegro!\n");
 		return -1;
 	}
-	srand(time(NULL));
+	
 	//cria um temporizador que incrementa uma unidade a cada 1.0/FPS segundos
     timer = al_create_timer(1.0 / FPS);
     if(!timer) {
@@ -222,8 +213,6 @@ int main(int argc, char **argv){
 		return -1;
 	}
 
-	//cria uma tela para exibição dos resultados
-
 	//instala o teclado
 	if(!al_install_keyboard()) {
 		fprintf(stderr, "failed to install keyboard!\n");
@@ -246,29 +235,12 @@ int main(int argc, char **argv){
 		fprintf(stderr, "font file does not exist or cannot be accessed!\n");
 	}
 
-	//inicializa o modulo que permite ler arquivos wav, ogg etc.
-		if(!al_install_audio()){
-			fprintf(stderr, "failed to install audio module!\n");
-			return -1;
-		}
-
-		//inicializa o modulo codec audio
-		if(!al_init_acodec_addon()){
-			fprintf(stderr, "failed to inialize acodec");
-			return -1;
-		}
-
-		//defino minha faixa de áudio
-		musica = al_load_audio_stream("DancingPlate.wav",4,1024);
-
-
  	//cria a fila de eventos
 	event_queue = al_create_event_queue();
 	if(!event_queue) {
 		fprintf(stderr, "failed to create event_queue!\n");
 		al_destroy_display(display);
 		al_destroy_timer(timer);
-		al_uninstall_audio();
 		al_uninstall_keyboard();
 		return -1;
 	}
@@ -279,17 +251,11 @@ int main(int argc, char **argv){
 		al_register_event_source(event_queue, al_get_timer_event_source(timer));
 		//registra na fila os eventos de teclado (ex: pressionar uma tecla)
 		al_register_event_source(event_queue, al_get_keyboard_event_source()); 	 
-		//registro a faixa de música e a saída de audio padrão do computador
-		//al_attach_audio_stream_to_mixer(musica,al_get_default_mixer());
-		//defino a música a ser reproduzida e a forma, no caso em looping
-		//al_set_audio_stream_playmode(musica,ALLEGRO_PLAYMODE_LOOP);
-		//aqui me refiro a tornar a condição verdadeira e iniciar a música
-		//al_set_audio_stream_playing(musica, true);
 		//muda titulo da tela
 		al_set_window_title(display, "Dancing Plates");
 		
 
-	//JOGADOR
+		//JOGADOR
 		Jogador jogador;
 		InicializaJogador(&jogador);
 		//POSTE
@@ -304,7 +270,7 @@ int main(int argc, char **argv){
 		int score = 0;
 		int opo = 1;
 		int tempo;
-	int playing=1;
+		int playing=1;
 
 	//inicia o temporizador
 	al_start_timer(timer);
@@ -323,7 +289,7 @@ int main(int argc, char **argv){
 
 			desenha_jogador(jogador);
 
-			desenha_postes(poste, jogador,ev);
+			desenha_postes(poste);
 
 			for(opo = 0; opo<NUM_PRATOS; opo++){
 				if(abs(jogador.x - poste[opo].x)<=2 && jogador.equilibrando ==1 && pratos[opo].situacao==1){
@@ -334,7 +300,7 @@ int main(int argc, char **argv){
 					break;
 				}
 				poste[opo].cor = al_map_rgb(255, 255,255);
-			}
+			}	
 
 			tempo = al_get_timer_count(timer)/FPS;
 			for(opo = 0; opo<NUM_PRATOS; opo++){
@@ -342,7 +308,6 @@ int main(int argc, char **argv){
 					desenha_pratos(pratos,opo);
 					pratos[opo].situacao = 1;
 				}
-				
 				}
 
 			for(opo = 0; opo<NUM_PRATOS;opo++){
@@ -360,19 +325,15 @@ int main(int argc, char **argv){
 				}
 			}
 			score++;
-al_draw_textf(size_60, al_map_rgb(0,0,0),SCREEN_W/2 - 30,460, ALLEGRO_ALIGN_CENTER,"Pontuação: %i",score);			
+		al_draw_textf(size_60, al_map_rgb(0,0,0),SCREEN_W/2 - 30,460, ALLEGRO_ALIGN_CENTER,"Pontuação: %i",score);			
 
 			//atualiza a tela (quando houver algo para mostrar)
 			al_flip_display();
 
 			if(al_get_timer_count(timer)%(int)FPS == 0){
 				printf("\n%d segundos se passaram...", (int)(al_get_timer_count(timer)/FPS));
-				
-				
+					
 			}
-
-			
-
 			
 		}
 			
@@ -380,7 +341,6 @@ al_draw_textf(size_60, al_map_rgb(0,0,0),SCREEN_W/2 - 30,460, ALLEGRO_ALIGN_CENT
 		else if((ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)|| (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE)) {
 			playing = 0;
 		}
-		
 		
 		//se o tipo de evento for um pressionar de uma tecla
 		else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
@@ -395,17 +355,13 @@ al_draw_textf(size_60, al_map_rgb(0,0,0),SCREEN_W/2 - 30,460, ALLEGRO_ALIGN_CENT
 			} 
 			else if (ev.keyboard.keycode == ALLEGRO_KEY_SPACE){
 			jogador.equilibrando = 1;
-
 			}
-
-			
 		}
 		//se o tipo de evento for um pressionar de uma tecla
 		else if(ev.type == ALLEGRO_EVENT_KEY_UP) {
 
 			if(ev.keyboard.keycode == ALLEGRO_KEY_A) {
 				jogador.mov_esq = 0;
-				
 			}
 			else if(ev.keyboard.keycode == ALLEGRO_KEY_D) {
 				jogador.mov_dir = 0;
@@ -417,7 +373,6 @@ al_draw_textf(size_60, al_map_rgb(0,0,0),SCREEN_W/2 - 30,460, ALLEGRO_ALIGN_CENT
 
 		if (!playing) {
         desenha_final();
-
 		al_rest(2.0);
 			al_set_window_title(display, "Resultados");
 			desenha_final();
@@ -431,25 +386,14 @@ al_draw_textf(size_60, al_map_rgb(0,0,0),SCREEN_W/2 - 30,460, ALLEGRO_ALIGN_CENT
 				al_draw_textf(size_32, al_map_rgb(255,0,0),SCREEN_W/2,SCREEN_H/2, ALLEGRO_ALIGN_CENTER,"Sua Pontuação: %i",score);
 				al_draw_textf(size_32, al_map_rgb(0,255,0),SCREEN_W/2,SCREEN_H/2+40, ALLEGRO_ALIGN_CENTER,"Recorde: %i",recorde);
 			}
-			
-			
-	
-
         al_flip_display();
-
         al_rest(5.0);
-    }
-		}
-
-
-	
-
-		
+    	}
+	}
 
 	al_destroy_timer(timer);
 	al_destroy_display(display);
 	al_destroy_event_queue(event_queue);
-
 
 	return 0;
 }
